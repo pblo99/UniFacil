@@ -53,9 +53,9 @@ export default function RatingScreen({ discipline, initialRating, onBack, onSave
   };
 
   return (
-    <div className="flex h-full flex-col overflow-hidden">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
       <TopBar title="Avaliar disciplina" subtitle={discipline.name} onBack={onBack} />
-      <main className="flex-1 space-y-4 overflow-y-auto px-5 pb-6">
+      <main className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 pb-8">
         <div className="space-y-2 rounded-card bg-white p-5 shadow-card">
           <Badge variant="primary">Disciplina selecionada</Badge>
           <h2 className="text-xl font-semibold text-text-primary">{discipline.name}</h2>

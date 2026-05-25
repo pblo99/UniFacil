@@ -12,7 +12,7 @@ interface CardButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const baseClassName =
-  'rounded-card border border-border/80 bg-surface p-4 text-left shadow-card transition duration-200';
+  'min-w-0 break-words rounded-card border border-border/80 bg-surface p-4 text-left shadow-card transition duration-200';
 
 export function Card({ children, className, ...props }: CardProps) {
   return (

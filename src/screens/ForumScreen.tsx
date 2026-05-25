@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { MessageSquareText, Plus, RefreshCw, Sparkles, ThumbsUp } from 'lucide-react';
 import Badge from '../components/Badge';
 import Button from '../components/Button';
-import { Card, CardButton } from '../components/Card';
+import { Card } from '../components/Card';
 import EmptyState from '../components/EmptyState';
 import Input from '../components/Input';
 import Modal from '../components/Modal';
@@ -120,7 +120,7 @@ export default function ForumScreen({
   };
 
   return (
-    <div className="relative flex h-full flex-col overflow-hidden">
+    <div className="relative flex h-full min-h-0 flex-col overflow-hidden">
       <TopBar
         title="Fórum / Q&A"
         subtitle="Perguntas, respostas e trocas rápidas da turma"
@@ -136,7 +136,7 @@ export default function ForumScreen({
           </button>
         }
       />
-      <main className="flex-1 space-y-3 overflow-y-auto px-5 pb-6">
+      <main className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 pb-4">
         {questions.length === 0 ? (
           <EmptyState
             icon={<MessageSquareText className="h-6 w-6" />}
@@ -151,26 +151,27 @@ export default function ForumScreen({
             const liked = likedQuestionIds.includes(question.id);
 
             return (
-              <CardButton key={question.id} onClick={() => setSelectedQuestionId(question.id)} className="space-y-3">
+              <Card key={question.id} className="space-y-3">
                 <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-2">
-                    <Badge variant="primary">{question.tag}</Badge>
-                    <p className="text-sm font-semibold text-text-primary">{question.title}</p>
-                  </div>
+                  <button type="button" onClick={() => setSelectedQuestionId(question.id)} className="min-w-0 flex-1 text-left">
+                    <div className="space-y-2">
+                      <Badge variant="primary">{question.tag}</Badge>
+                      <p className="line-clamp-2 break-words text-sm font-semibold text-text-primary">{question.title}</p>
+                    </div>
+                  </button>
                   <button
                     type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onToggleUseful(question.id);
-                    }}
+                    onClick={() => onToggleUseful(question.id)}
                     className={`rounded-full p-2 transition ${liked ? 'bg-primary-light text-primary' : 'bg-slate-100 text-text-secondary'}`}
                     aria-label={liked ? 'Remover útil' : 'Marcar como útil'}
                   >
                     <ThumbsUp className={`h-4 w-4 ${liked ? 'fill-primary text-primary' : ''}`} />
                   </button>
                 </div>
-                <p className="line-clamp-2 text-sm leading-6 text-text-secondary">{question.body}</p>
-                <div className="flex items-center justify-between text-xs text-text-secondary">
+                <button type="button" onClick={() => setSelectedQuestionId(question.id)} className="w-full text-left">
+                  <p className="line-clamp-2 break-words text-sm leading-6 text-text-secondary">{question.body}</p>
+                </button>
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-text-secondary">
                   <span>
                     {question.author} · {formatRelativeLabel(question.createdAt)}
                   </span>
@@ -178,13 +179,16 @@ export default function ForumScreen({
                     {pluralize(answersCount, 'resposta', 'respostas')} · {question.helpfulCount + (liked ? 1 : 0)} útil
                   </span>
                 </div>
-              </CardButton>
+                <Button variant="outline" onClick={() => setSelectedQuestionId(question.id)}>
+                  Ver conversa
+                </Button>
+              </Card>
             );
           })
         )}
       </main>
 
-      <div className="px-5 pb-6">
+      <div className="shrink-0 px-5 pb-5">
         <Button fullWidth onClick={() => setShowCreateModal(true)}>
           <Plus className="h-4 w-4" />
           Nova pergunta
@@ -212,6 +216,7 @@ export default function ForumScreen({
           label="Título"
           placeholder="Descreva sua dúvida"
           value={title}
+          maxLength={120}
           onChange={(event) => setTitle(event.target.value)}
         />
         <label className="flex flex-col gap-2 text-sm font-medium text-text-primary" htmlFor="forum-question-body">
@@ -220,6 +225,7 @@ export default function ForumScreen({
             id="forum-question-body"
             className="min-h-[120px] rounded-input border border-border bg-white px-4 py-3 text-sm text-text-primary outline-none transition placeholder:text-text-secondary/70 focus:border-primary/60"
             placeholder="Explique o contexto da sua pergunta"
+            maxLength={700}
             value={body}
             onChange={(event) => setBody(event.target.value)}
           />
@@ -283,12 +289,24 @@ export default function ForumScreen({
                 id="forum-answer-message"
                 className="min-h-[90px] rounded-input border border-border bg-white px-4 py-3 text-sm text-text-primary outline-none transition placeholder:text-text-secondary/70 focus:border-primary/60"
                 placeholder="Escreva sua resposta"
+                maxLength={420}
                 value={answerMessage}
                 onChange={(event) => setAnswerMessage(event.target.value)}
               />
             </label>
             <Button fullWidth onClick={handleCreateAnswer}>
               Responder
+            </Button>
+            <Button
+              variant="outline"
+              fullWidth
+              onClick={() => {
+                setSelectedQuestionId(null);
+                setAnswerMessage('');
+                setVisibleSummary(undefined);
+              }}
+            >
+              Fechar pergunta
             </Button>
           </>
         }

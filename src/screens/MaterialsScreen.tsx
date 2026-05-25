@@ -49,9 +49,9 @@ export default function MaterialsScreen({ folders, materials, onBack, onAddMater
   };
 
   return (
-    <div className="relative flex h-full flex-col overflow-hidden">
+    <div className="relative flex h-full min-h-0 flex-col overflow-hidden">
       <TopBar title="Materiais" subtitle="Conteúdos organizados por pasta" onBack={onBack} />
-      <main className="flex-1 space-y-5 overflow-y-auto px-5 pb-6">
+      <main className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 pb-4">
         <section className="space-y-3">
           <SectionTitle title="Pastas" subtitle="Acesse rapidamente os principais conteúdos" />
           <div className="space-y-3">
@@ -95,7 +95,7 @@ export default function MaterialsScreen({ folders, materials, onBack, onAddMater
         </section>
       </main>
 
-      <div className="px-5 pb-6">
+      <div className="shrink-0 px-5 pb-5">
         <Button fullWidth onClick={() => setShowModal(true)}>
           <Plus className="h-4 w-4" />
           Enviar material
@@ -123,6 +123,7 @@ export default function MaterialsScreen({ folders, materials, onBack, onAddMater
           label="Título"
           placeholder="Ex.: Resumo da aula 4"
           value={title}
+          maxLength={90}
           onChange={(event) => setTitle(event.target.value)}
         />
         <label className="flex flex-col gap-2 text-sm font-medium text-text-primary" htmlFor="material-category">
@@ -145,6 +146,7 @@ export default function MaterialsScreen({ folders, materials, onBack, onAddMater
           label="Tipo"
           placeholder="PDF"
           value={typeLabel}
+          maxLength={12}
           onChange={(event) => setTypeLabel(event.target.value)}
         />
       </Modal>

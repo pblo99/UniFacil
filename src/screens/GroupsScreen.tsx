@@ -42,7 +42,7 @@ export default function GroupsScreen({
   };
 
   return (
-    <div className="relative flex h-full flex-col overflow-hidden">
+    <div className="relative flex h-full min-h-0 flex-col overflow-hidden">
       <TopBar
         title="Grupos"
         subtitle="Conecte-se com colegas e organize estudos"
@@ -57,7 +57,7 @@ export default function GroupsScreen({
           </button>
         }
       />
-      <main className="flex-1 space-y-3 overflow-y-auto px-5 pb-6">
+      <main className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 pb-4">
         {groups.length === 0 ? (
           <EmptyState
             icon={<AppIcon icon="users" className="h-6 w-6" />}
@@ -93,7 +93,7 @@ export default function GroupsScreen({
         )}
       </main>
 
-      <div className="px-5 pb-6">
+      <div className="shrink-0 px-5 pb-5">
         <Button fullWidth onClick={() => setShowModal(true)}>
           <Plus className="h-4 w-4" />
           Criar grupo
@@ -121,6 +121,7 @@ export default function GroupsScreen({
           label="Nome do grupo"
           placeholder="Ex.: Revisão para a prova"
           value={name}
+          maxLength={70}
           onChange={(event) => setName(event.target.value)}
         />
         <label className="flex flex-col gap-2 text-sm font-medium text-text-primary" htmlFor="new-group-description">
@@ -129,6 +130,7 @@ export default function GroupsScreen({
             id="new-group-description"
             className="min-h-[110px] rounded-input border border-border bg-white px-4 py-3 text-sm text-text-primary outline-none transition placeholder:text-text-secondary/70 focus:border-primary/60"
             placeholder="Descreva o objetivo do grupo"
+            maxLength={220}
             value={description}
             onChange={(event) => setDescription(event.target.value)}
           />

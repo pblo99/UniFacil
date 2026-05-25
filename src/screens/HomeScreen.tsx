@@ -90,7 +90,7 @@ export default function HomeScreen({
   };
 
   return (
-    <div className="relative flex h-full flex-col overflow-hidden">
+    <div className="relative flex h-full min-h-0 flex-col overflow-hidden">
       <TopBar
         title={`Olá, ${user.name.split(' ')[0]}!`}
         subtitle="O que você quer fazer hoje?"
@@ -106,7 +106,7 @@ export default function HomeScreen({
         }
       />
 
-      <main className="flex-1 space-y-6 overflow-y-auto px-5 pb-6">
+      <main className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 pb-8">
         <section className="space-y-3">
           <Card className="border-primary/20 bg-white">
             <div className="flex items-start gap-3">

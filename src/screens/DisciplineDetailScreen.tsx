@@ -63,9 +63,9 @@ export default function DisciplineDetailScreen({
   };
 
   return (
-    <div className="flex h-full flex-col overflow-hidden">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
       <TopBar title={discipline.name} subtitle="Detalhes da disciplina" onBack={onBack} />
-      <main className="flex-1 space-y-5 overflow-y-auto px-5 pb-6">
+      <main className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 pb-8">
         <Card className="space-y-4">
           <div className="flex items-start gap-4">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-light text-primary">

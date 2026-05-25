@@ -31,7 +31,7 @@ export default function ChatScreen({ messages, onBack, onSend }: ChatScreenProps
   };
 
   return (
-    <div className="flex h-full flex-col overflow-hidden">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
       <TopBar
         title="Chat Geral"
         subtitle="45 participantes"
@@ -42,8 +42,8 @@ export default function ChatScreen({ messages, onBack, onSend }: ChatScreenProps
           </div>
         }
       />
-      <div className="flex flex-1 flex-col overflow-hidden px-5 pb-5">
-        <div className="flex-1 space-y-3 overflow-y-auto pb-4">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-5 pb-5">
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pb-4">
           {messages.map((chatMessage) => (
             <div key={chatMessage.id} className={`flex ${chatMessage.isOwn ? 'justify-end' : 'justify-start'}`}>
               <div
@@ -64,12 +64,13 @@ export default function ChatScreen({ messages, onBack, onSend }: ChatScreenProps
           <div ref={endRef} />
         </div>
 
-        <form onSubmit={handleSubmit} className="flex items-center gap-3 border-t border-border/80 pt-4">
+        <form onSubmit={handleSubmit} className="flex shrink-0 items-center gap-3 border-t border-border/80 pt-4">
           <input
             aria-label="Digite sua mensagem"
             className="min-h-[52px] flex-1 rounded-input border border-border bg-white px-4 text-sm text-text-primary outline-none transition placeholder:text-text-secondary/70 focus:border-primary/60"
             placeholder="Digite uma mensagem..."
             value={message}
+            maxLength={280}
             onChange={(event) => setMessage(event.target.value)}
           />
           <Button type="submit" className="min-h-[52px] min-w-[52px] rounded-full px-0">

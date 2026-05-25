@@ -32,7 +32,7 @@ export default function Button({
       disabled={disabled}
       className={cn(
         'inline-flex min-h-[52px] items-center justify-center gap-2 rounded-button px-4 text-sm font-semibold transition duration-200',
-        'focus-visible:ring-4 focus-visible:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60',
+        'whitespace-normal text-center focus-visible:ring-4 focus-visible:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60',
         variantClasses[variant],
         fullWidth && 'w-full',
         className

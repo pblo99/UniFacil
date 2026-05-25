@@ -16,12 +16,15 @@
 html {
   scroll-behavior: smooth;
   background: #f6f8fc;
+  min-height: 100%;
+  overflow: hidden;
 }
 
 body {
   margin: 0;
   min-width: 320px;
-  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
   background:
     radial-gradient(circle at top, rgba(11, 99, 246, 0.12), transparent 34%),
     linear-gradient(180deg, #f8fbff 0%, #f6f8fc 38%, #eef3fb 100%);
@@ -43,7 +46,8 @@ select {
 }
 
 #root {
-  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
 }
 
 ::-webkit-scrollbar {

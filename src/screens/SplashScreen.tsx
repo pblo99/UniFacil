@@ -9,7 +9,7 @@ interface SplashScreenProps {
 
 export default function SplashScreen({ onStart }: SplashScreenProps) {
   return (
-    <div className="relative flex h-full flex-1 flex-col items-center justify-center overflow-hidden px-6 py-10 text-center">
+    <div className="relative flex h-full min-h-0 flex-1 flex-col items-center justify-center overflow-hidden px-6 py-10 text-center">
       <div className="absolute left-6 top-16 rounded-full bg-white/80 p-4 text-primary shadow-card">
         <AppIcon icon="book-open" className="h-6 w-6" />
       </div>

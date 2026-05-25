@@ -23,9 +23,9 @@ export default function EventsScreen({ events, interestedEventIds, onBack, onTog
   const interestedCount = interestedEventIds.length;
 
   return (
-    <div className="relative flex h-full flex-col overflow-hidden">
+    <div className="relative flex h-full min-h-0 flex-col overflow-hidden">
       <TopBar title="Eventos" subtitle="Agenda acadêmica do semestre" onBack={onBack} />
-      <main className="flex-1 space-y-5 overflow-y-auto px-5 pb-6">
+      <main className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 pb-8">
         <Card className="space-y-3">
           <SectionTitle
             title="Seu interesse"

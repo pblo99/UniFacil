@@ -23,9 +23,9 @@ export default function DisciplinesScreen({
     professors.find((professor) => professor.id === professorId)?.name ?? 'Professor não informado';
 
   return (
-    <div className="flex h-full flex-col overflow-hidden">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
       <TopBar title="Minhas disciplinas" subtitle="Acompanhe horários, conteúdos e avaliações" />
-      <main className="flex-1 space-y-4 overflow-y-auto px-5 pb-6">
+      <main className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 pb-8">
         <SectionTitle title="Grade atual" subtitle="6 disciplinas ativas neste semestre" />
         <div className="space-y-3">
           {disciplines.map((discipline) => (

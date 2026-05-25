@@ -537,7 +537,7 @@ export default function App() {
       <AnimatePresence mode="wait">
         <motion.div
           key={`${currentScreen}-${selectedDisciplineId}`}
-          className="flex h-full flex-1 flex-col"
+          className="flex h-full min-h-0 flex-1 flex-col"
           initial={{ opacity: 0, x: 18 }}
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -14 }}

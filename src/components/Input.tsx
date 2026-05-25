@@ -22,7 +22,7 @@ export default function Input({ label, error, icon, rightSlot, className, id, ..
         <input
           id={id}
           className={cn(
-            'w-full border-0 bg-transparent text-sm text-text-primary placeholder:text-text-secondary/70',
+            'min-w-0 w-full border-0 bg-transparent text-sm text-text-primary placeholder:text-text-secondary/70',
             className
           )}
           {...props}

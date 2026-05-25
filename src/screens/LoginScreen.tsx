@@ -34,7 +34,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
   };
 
   return (
-    <div className="flex h-full flex-1 flex-col justify-center px-6 py-8">
+    <div className="flex h-full min-h-0 flex-1 flex-col justify-center overflow-y-auto px-6 py-8">
       <div className="mx-auto w-full max-w-sm rounded-[28px] bg-white p-6 shadow-card">
         <div className="mb-8 flex items-center gap-3">
           <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-primary-light">

@@ -10,8 +10,8 @@ interface TopBarProps {
 
 export default function TopBar({ title, subtitle, onBack, action }: TopBarProps) {
   return (
-    <header className="flex items-center justify-between gap-3 px-5 pb-4 pt-6">
-      <div className="flex items-center gap-3">
+    <header className="flex shrink-0 items-center justify-between gap-3 px-5 pb-4 pt-6">
+      <div className="flex min-w-0 items-center gap-3">
         {onBack ? (
           <button
             type="button"
@@ -22,9 +22,9 @@ export default function TopBar({ title, subtitle, onBack, action }: TopBarProps)
             <ArrowLeft className="h-5 w-5" />
           </button>
         ) : null}
-        <div>
-          <h1 className="text-[1.45rem] font-semibold leading-tight text-text-primary">{title}</h1>
-          {subtitle ? <p className="mt-1 text-sm text-text-secondary">{subtitle}</p> : null}
+        <div className="min-w-0">
+          <h1 className="break-words text-[1.45rem] font-semibold leading-tight text-text-primary">{title}</h1>
+          {subtitle ? <p className="mt-1 break-words text-sm text-text-secondary">{subtitle}</p> : null}
         </div>
       </div>
       {action ? <div className="shrink-0">{action}</div> : null}
