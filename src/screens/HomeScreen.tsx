@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Bell, ChevronRight } from 'lucide-react';
+import { Bell, ChevronRight, RefreshCw, Sparkles, X } from 'lucide-react';
 import { exams as mockExams, notices as mockNotices } from '../data/mockData';
 import type { EventItem, ExamItem, Notice, UserProfile } from '../types/app';
+import type { WeeklyPlan } from '../types/intelligence';
 import { formatDateTimeLabel } from '../utils/format';
 import { AppIcon } from '../utils/icons';
 import Badge from '../components/Badge';
@@ -16,6 +17,9 @@ interface HomeScreenProps {
   nextEvent: EventItem | undefined;
   nextExam: ExamItem | undefined;
   importantNotice: Notice | undefined;
+  weeklyPlan: WeeklyPlan | null;
+  onGenerateWeeklyPlan: () => Promise<WeeklyPlan>;
+  onClearWeeklyPlan: () => void;
   onOpenDisciplines: () => void;
   onOpenGroups: () => void;
   onOpenMaterials: () => void;
@@ -36,6 +40,9 @@ export default function HomeScreen({
   nextEvent,
   nextExam,
   importantNotice,
+  weeklyPlan,
+  onGenerateWeeklyPlan,
+  onClearWeeklyPlan,
   onOpenDisciplines,
   onOpenGroups,
   onOpenMaterials,
@@ -43,6 +50,7 @@ export default function HomeScreen({
 }: HomeScreenProps) {
   const [showExamsModal, setShowExamsModal] = useState(false);
   const [showNoticesModal, setShowNoticesModal] = useState(false);
+  const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
 
   const handleShortcutClick = (action: (typeof shortcutCards)[number]['action']) => {
     if (action === 'disciplines') {
@@ -73,6 +81,14 @@ export default function HomeScreen({
     setShowNoticesModal(true);
   };
 
+  const handleGenerateWeeklyPlan = async () => {
+    setIsGeneratingPlan(true);
+    const startTime = Date.now();
+    await onGenerateWeeklyPlan();
+    const remainingTime = Math.max(0, 650 - (Date.now() - startTime));
+    window.setTimeout(() => setIsGeneratingPlan(false), remainingTime);
+  };
+
   return (
     <div className="relative flex h-full flex-col overflow-hidden">
       <TopBar
@@ -91,6 +107,79 @@ export default function HomeScreen({
       />
 
       <main className="flex-1 space-y-6 overflow-y-auto px-5 pb-6">
+        <section className="space-y-3">
+          <Card className="border-primary/20 bg-white">
+            <div className="flex items-start gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary-light text-primary">
+                <Sparkles className="h-5 w-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-base font-semibold text-text-primary">Resumo inteligente</p>
+                <p className="mt-1 text-sm leading-6 text-text-secondary">
+                  Organize sua semana com base nos seus compromissos acadêmicos.
+                </p>
+              </div>
+            </div>
+
+            {weeklyPlan ? (
+              <div className="mt-4 space-y-3 rounded-2xl bg-primary-light/35 p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-text-primary">{weeklyPlan.title}</p>
+                    <p className="mt-1 text-xs leading-5 text-text-secondary">{weeklyPlan.intro}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={onClearWeeklyPlan}
+                    className="rounded-full p-1.5 text-text-secondary transition hover:bg-white hover:text-danger"
+                    aria-label="Limpar resumo"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+
+                <ol className="space-y-2">
+                  {weeklyPlan.priorities.map((priority, index) => (
+                    <li key={priority.id} className="rounded-2xl bg-white p-3 shadow-sm">
+                      <div className="mb-2 flex items-center gap-2">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-semibold text-white">
+                          {index + 1}
+                        </span>
+                        <Badge variant="primary">{priority.badge}</Badge>
+                      </div>
+                      <p className="text-sm font-semibold text-text-primary">{priority.title}</p>
+                      <p className="mt-1 text-xs leading-5 text-text-secondary">{priority.description}</p>
+                    </li>
+                  ))}
+                </ol>
+
+                <p className="text-xs leading-5 text-text-secondary">{weeklyPlan.closingMessage}</p>
+              </div>
+            ) : null}
+
+            <div className="mt-4 grid grid-cols-1 gap-3">
+              <Button fullWidth onClick={handleGenerateWeeklyPlan} disabled={isGeneratingPlan}>
+                {isGeneratingPlan ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    Organizando prioridades
+                  </>
+                ) : weeklyPlan ? (
+                  <>
+                    <RefreshCw className="h-4 w-4" />
+                    Atualizar resumo
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4" />
+                    Gerar resumo da semana
+                  </>
+                )}
+              </Button>
+            </div>
+          </Card>
+        </section>
+
         <section className="grid grid-cols-2 gap-3">
           {shortcutCards.map(({ label, icon, action }) => (
             <CardButton key={label} className="space-y-3 p-4" onClick={() => handleShortcutClick(action)}>

@@ -1,10 +1,14 @@
-import { CircleHelp, FileText, Star } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { CircleHelp, FileText, RefreshCw, Sparkles, Star } from 'lucide-react';
 import Badge from '../components/Badge';
 import Button from '../components/Button';
 import { Card } from '../components/Card';
+import EmptyState from '../components/EmptyState';
+import Modal from '../components/Modal';
 import SectionTitle from '../components/SectionTitle';
 import TopBar from '../components/TopBar';
 import type { Discipline, ForumQuestion, MaterialItem, Professor } from '../types/app';
+import type { MaterialRecommendationResult } from '../types/intelligence';
 import { formatAverage, formatRelativeLabel } from '../utils/format';
 import { AppIcon } from '../utils/icons';
 
@@ -14,10 +18,12 @@ interface DisciplineDetailScreenProps {
   average: number;
   recentMaterials: MaterialItem[];
   recentQuestions: ForumQuestion[];
+  recommendation: MaterialRecommendationResult | undefined;
   onBack: () => void;
   onOpenRating: () => void;
   onOpenMaterials: () => void;
   onOpenForum: () => void;
+  onGenerateRecommendations: (disciplineId: string) => Promise<MaterialRecommendationResult>;
 }
 
 export default function DisciplineDetailScreen({
@@ -26,11 +32,36 @@ export default function DisciplineDetailScreen({
   average,
   recentMaterials,
   recentQuestions,
+  recommendation,
   onBack,
   onOpenRating,
   onOpenMaterials,
-  onOpenForum
+  onOpenForum,
+  onGenerateRecommendations
 }: DisciplineDetailScreenProps) {
+  const [showRecommendations, setShowRecommendations] = useState(false);
+  const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(false);
+  const [visibleRecommendation, setVisibleRecommendation] = useState<MaterialRecommendationResult | undefined>(
+    recommendation
+  );
+
+  useEffect(() => {
+    setVisibleRecommendation(recommendation);
+  }, [discipline.id, recommendation]);
+
+  const handleGenerateRecommendations = async () => {
+    setShowRecommendations(true);
+    setIsLoadingRecommendations(true);
+    const startTime = Date.now();
+    const result = await onGenerateRecommendations(discipline.id);
+    const remainingTime = Math.max(0, 650 - (Date.now() - startTime));
+
+    window.setTimeout(() => {
+      setVisibleRecommendation(result);
+      setIsLoadingRecommendations(false);
+    }, remainingTime);
+  };
+
   return (
     <div className="flex h-full flex-col overflow-hidden">
       <TopBar title={discipline.name} subtitle="Detalhes da disciplina" onBack={onBack} />
@@ -123,6 +154,10 @@ export default function DisciplineDetailScreen({
           <Button fullWidth onClick={onOpenRating}>
             Avaliar disciplina
           </Button>
+          <Button variant="secondary" fullWidth onClick={handleGenerateRecommendations}>
+            <Sparkles className="h-4 w-4" />
+            Recomendar materiais
+          </Button>
           <Button variant="outline" fullWidth onClick={onOpenMaterials}>
             Ver materiais
           </Button>
@@ -131,6 +166,51 @@ export default function DisciplineDetailScreen({
           </Button>
         </div>
       </main>
+
+      <Modal
+        open={showRecommendations}
+        title="Recomendações inteligentes"
+        onClose={() => setShowRecommendations(false)}
+        footer={
+          <Button variant="secondary" onClick={() => setShowRecommendations(false)}>
+            Fechar
+          </Button>
+        }
+      >
+        {isLoadingRecommendations ? (
+          <Card className="flex items-center gap-3 p-4">
+            <RefreshCw className="h-5 w-5 animate-spin text-primary" />
+            <p className="text-sm font-medium text-text-secondary">Analisando materiais da disciplina...</p>
+          </Card>
+        ) : visibleRecommendation && visibleRecommendation.items.length > 0 ? (
+          <div className="space-y-4">
+            <Card className="space-y-2 border-primary/20 p-4">
+              <p className="text-sm font-semibold text-text-primary">{visibleRecommendation.headline}</p>
+              <p className="text-sm leading-6 text-text-secondary">{visibleRecommendation.reason}</p>
+            </Card>
+            <ol className="space-y-3">
+              {visibleRecommendation.items.map((item, index) => (
+                <li key={item.materialId} className="rounded-2xl border border-border/80 bg-white p-4">
+                  <div className="mb-2 flex items-center gap-2">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-semibold text-white">
+                      {index + 1}
+                    </span>
+                    <Badge variant="primary">{item.typeLabel}</Badge>
+                  </div>
+                  <p className="text-sm font-semibold text-text-primary">{item.title}</p>
+                  <p className="mt-1 text-xs leading-5 text-text-secondary">{item.reason}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
+        ) : (
+          <EmptyState
+            icon={<FileText className="h-6 w-6" />}
+            title="Sem recomendação disponível"
+            description="Adicione materiais ou perguntas relacionadas para receber sugestões mais precisas."
+          />
+        )}
+      </Modal>
     </div>
   );
 }

@@ -8,17 +8,22 @@ Demonstrar a proposta de um hub acadêmico em formato de aplicativo web, com foc
 
 ## Funcionalidades
 
-- Login simulado
+- Login de demonstração
 - Painel inicial do aluno
 - Disciplinas
 - Avaliação de disciplinas
 - Grupos acadêmicos
 - Fórum / Q&A
-- Chat simulado
+- Chat local
 - Materiais
 - Eventos
 - Perfil do aluno
+- Resumo inteligente da semana
+- Recomendação inteligente de materiais
+- Síntese de discussões do fórum
+- Sugestão automática de categoria para dúvidas
 - Persistência local com localStorage
+- Compatibilidade com GitHub Pages
 
 ## Como executar
 
@@ -35,4 +40,4 @@ npm run build
 
 ## Observação
 
-Este projeto é um protótipo acadêmico e utiliza dados simulados.
+Este projeto é um protótipo acadêmico, utiliza dados locais e inclui recursos inteligentes locais para fins de apresentação.

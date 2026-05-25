@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { MessageSquareText, Plus, ThumbsUp } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { MessageSquareText, Plus, RefreshCw, Sparkles, ThumbsUp } from 'lucide-react';
 import Badge from '../components/Badge';
 import Button from '../components/Button';
 import { Card, CardButton } from '../components/Card';
@@ -7,51 +7,89 @@ import EmptyState from '../components/EmptyState';
 import Input from '../components/Input';
 import Modal from '../components/Modal';
 import TopBar from '../components/TopBar';
+import { suggestQuestionCategory } from '../services/academicIntelligence';
 import type { ForumAnswer, ForumQuestion } from '../types/app';
+import type {
+  CategorySuggestion,
+  ForumDiscussionSummary,
+  QuestionCategory
+} from '../types/intelligence';
 import { formatRelativeLabel, pluralize } from '../utils/format';
 
 interface ForumScreenProps {
   questions: ForumQuestion[];
   answers: ForumAnswer[];
   likedQuestionIds: string[];
+  summaries: Record<string, ForumDiscussionSummary>;
   onBack: () => void;
-  onCreateQuestion: (title: string, tag: string, body: string) => void;
+  onCreateQuestion: (title: string, tag: QuestionCategory, body: string, suggestion: CategorySuggestion) => void;
   onCreateAnswer: (questionId: string, message: string) => void;
   onToggleUseful: (questionId: string) => void;
+  onGenerateSummary: (questionId: string) => Promise<ForumDiscussionSummary>;
 }
+
+const categories: QuestionCategory[] = [
+  'Banco de Dados',
+  'Estrutura de Dados',
+  'Engenharia de Software',
+  'Linguagem de Programação',
+  'Usabilidade',
+  'Acadêmico',
+  'Eventos',
+  'Materiais',
+  'Geral'
+];
 
 export default function ForumScreen({
   questions,
   answers,
   likedQuestionIds,
+  summaries,
   onBack,
   onCreateQuestion,
   onCreateAnswer,
-  onToggleUseful
+  onToggleUseful,
+  onGenerateSummary
 }: ForumScreenProps) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null);
   const [title, setTitle] = useState('');
-  const [tag, setTag] = useState('');
+  const [tag, setTag] = useState<QuestionCategory>('Geral');
   const [body, setBody] = useState('');
+  const [categoryChanged, setCategoryChanged] = useState(false);
   const [answerMessage, setAnswerMessage] = useState('');
   const [formError, setFormError] = useState('');
+  const [isLoadingSummary, setIsLoadingSummary] = useState(false);
+  const [visibleSummary, setVisibleSummary] = useState<ForumDiscussionSummary | undefined>();
 
   const selectedQuestion = questions.find((question) => question.id === selectedQuestionId) ?? null;
   const selectedAnswers = answers.filter((answer) => answer.questionId === selectedQuestionId);
+  const suggestion = useMemo(() => suggestQuestionCategory(title, body), [title, body]);
+  const storedSummary = selectedQuestionId ? summaries[selectedQuestionId] : undefined;
+
+  useEffect(() => {
+    if (!categoryChanged) {
+      setTag(suggestion.category);
+    }
+  }, [categoryChanged, suggestion.category]);
+
+  useEffect(() => {
+    setVisibleSummary(storedSummary);
+  }, [storedSummary, selectedQuestionId]);
 
   const getAnswerCount = (questionId: string) => answers.filter((answer) => answer.questionId === questionId).length;
 
   const handleCreateQuestion = () => {
-    if (!title.trim() || !tag.trim() || !body.trim()) {
-      setFormError('Preencha título, assunto e descrição para publicar a pergunta.');
+    if (!title.trim() || !body.trim()) {
+      setFormError('Preencha título e descrição para publicar a pergunta.');
       return;
     }
 
-    onCreateQuestion(title.trim(), tag.trim(), body.trim());
+    onCreateQuestion(title.trim(), tag, body.trim(), suggestion);
     setTitle('');
-    setTag('');
+    setTag('Geral');
     setBody('');
+    setCategoryChanged(false);
     setFormError('');
     setShowCreateModal(false);
   };
@@ -63,6 +101,22 @@ export default function ForumScreen({
 
     onCreateAnswer(selectedQuestionId, answerMessage.trim());
     setAnswerMessage('');
+  };
+
+  const handleGenerateSummary = async () => {
+    if (!selectedQuestionId) {
+      return;
+    }
+
+    setIsLoadingSummary(true);
+    const startTime = Date.now();
+    const summary = await onGenerateSummary(selectedQuestionId);
+    const remainingTime = Math.max(0, 650 - (Date.now() - startTime));
+
+    window.setTimeout(() => {
+      setVisibleSummary(summary);
+      setIsLoadingSummary(false);
+    }, remainingTime);
   };
 
   return (
@@ -160,13 +214,6 @@ export default function ForumScreen({
           value={title}
           onChange={(event) => setTitle(event.target.value)}
         />
-        <Input
-          id="forum-question-tag"
-          label="Assunto"
-          placeholder="Ex.: Banco de Dados"
-          value={tag}
-          onChange={(event) => setTag(event.target.value)}
-        />
         <label className="flex flex-col gap-2 text-sm font-medium text-text-primary" htmlFor="forum-question-body">
           <span>Detalhes</span>
           <textarea
@@ -177,6 +224,47 @@ export default function ForumScreen({
             onChange={(event) => setBody(event.target.value)}
           />
         </label>
+
+        <Card className="space-y-3 border-primary/20 p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-light text-primary">
+              <Sparkles className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-text-primary">Categoria sugerida: {suggestion.category}</p>
+              <p className="mt-1 text-xs text-text-secondary">Confiança: {suggestion.confidence}</p>
+              <p className="mt-1 text-xs leading-5 text-text-secondary">Motivo: {suggestion.reason}</p>
+            </div>
+          </div>
+          <Button
+            variant={tag === suggestion.category ? 'secondary' : 'outline'}
+            onClick={() => {
+              setTag(suggestion.category);
+              setCategoryChanged(true);
+            }}
+          >
+            Usar categoria sugerida
+          </Button>
+        </Card>
+
+        <label className="flex flex-col gap-2 text-sm font-medium text-text-primary" htmlFor="forum-question-tag">
+          <span>Categoria final</span>
+          <select
+            id="forum-question-tag"
+            className="min-h-[52px] rounded-input border border-border bg-white px-4 text-sm text-text-primary outline-none transition focus:border-primary/60"
+            value={tag}
+            onChange={(event) => {
+              setTag(event.target.value as QuestionCategory);
+              setCategoryChanged(true);
+            }}
+          >
+            {categories.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
+        </label>
       </Modal>
 
       <Modal
@@ -185,6 +273,7 @@ export default function ForumScreen({
         onClose={() => {
           setSelectedQuestionId(null);
           setAnswerMessage('');
+          setVisibleSummary(undefined);
         }}
         footer={
           <>
@@ -222,6 +311,63 @@ export default function ForumScreen({
                 </button>
               </div>
             </Card>
+
+            <Card className="space-y-3 border-primary/20 p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-light text-primary">
+                  <Sparkles className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-text-primary">Síntese da discussão</p>
+                  <p className="mt-1 text-xs leading-5 text-text-secondary">
+                    Reúne a pergunta, as respostas e as marcações úteis desta conversa.
+                  </p>
+                </div>
+              </div>
+              {visibleSummary ? (
+                <div className="space-y-3 rounded-2xl bg-primary-light/35 p-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase text-primary">Problema principal</p>
+                    <p className="mt-1 text-sm leading-6 text-text-secondary">{visibleSummary.problem}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase text-primary">Orientações</p>
+                    <p className="mt-1 text-sm leading-6 text-text-secondary">{visibleSummary.guidance}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase text-primary">Próximo passo</p>
+                    <p className="mt-1 text-sm leading-6 text-text-secondary">{visibleSummary.nextStep}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="primary">{visibleSummary.category}</Badge>
+                    <Badge variant="neutral">{pluralize(visibleSummary.answerCount, 'resposta', 'respostas')}</Badge>
+                    <Badge variant="neutral">{visibleSummary.usefulCount} útil</Badge>
+                  </div>
+                  {visibleSummary.fewAnswersNotice ? (
+                    <p className="text-xs leading-5 text-text-secondary">{visibleSummary.fewAnswersNotice}</p>
+                  ) : null}
+                </div>
+              ) : null}
+              <Button fullWidth onClick={handleGenerateSummary} disabled={isLoadingSummary}>
+                {isLoadingSummary ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    Sintetizando discussão
+                  </>
+                ) : visibleSummary ? (
+                  <>
+                    <RefreshCw className="h-4 w-4" />
+                    Atualizar síntese
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4" />
+                    Gerar síntese da discussão
+                  </>
+                )}
+              </Button>
+            </Card>
+
             <div className="space-y-3">
               {selectedAnswers.length === 0 ? (
                 <EmptyState

@@ -1,3 +1,10 @@
+import type {
+  ForumDiscussionSummary,
+  MaterialRecommendationResult,
+  QuestionCategoryDecision,
+  WeeklyPlan
+} from './intelligence';
+
 export type AppScreen =
   | 'splash'
   | 'login'
@@ -174,4 +181,8 @@ export interface StorageState {
   chatMessages: ChatMessage[];
   customMaterials: MaterialItem[];
   interestedEventIds: string[];
+  lastWeeklyPlan: WeeklyPlan | null;
+  materialRecommendations: Record<string, MaterialRecommendationResult>;
+  forumSummaries: Record<string, ForumDiscussionSummary>;
+  questionCategoryDecisions: QuestionCategoryDecision[];
 }

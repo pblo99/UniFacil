@@ -15,6 +15,17 @@ import {
   professors,
   userProfile
 } from './data/mockData';
+import {
+  buildIntelligenceContext,
+  createExternalIntelligenceContext,
+  generateWeeklyPlan,
+  isForumDiscussionSummary,
+  isMaterialRecommendationResult,
+  isWeeklyPlan,
+  maybeUseExternalIntelligence,
+  recommendMaterials,
+  summarizeForumDiscussion
+} from './services/academicIntelligence';
 import ChatScreen from './screens/ChatScreen';
 import DisciplineDetailScreen from './screens/DisciplineDetailScreen';
 import DisciplinesScreen from './screens/DisciplinesScreen';
@@ -28,6 +39,13 @@ import MoreScreen from './screens/MoreScreen';
 import RatingScreen from './screens/RatingScreen';
 import SplashScreen from './screens/SplashScreen';
 import type { AppScreen, MainScreen, Rating, StorageState } from './types/app';
+import type {
+  CategorySuggestion,
+  ForumDiscussionSummary,
+  MaterialRecommendationResult,
+  QuestionCategory,
+  WeeklyPlan
+} from './types/intelligence';
 import { loadStorageState, resetStorageState, saveStorageState } from './utils/storage';
 
 function sortDescendingByDate<T extends { createdAt?: string; addedAt?: string }>(items: T[]): T[] {
@@ -175,12 +193,14 @@ export default function App() {
     }));
   };
 
-  const handleCreateQuestion = (title: string, tag: string, body: string) => {
+  const handleCreateQuestion = (title: string, tag: QuestionCategory, body: string, suggestion: CategorySuggestion) => {
+    const questionId = `question-${Date.now()}`;
+
     setStorageState((current) => ({
       ...current,
       forumQuestions: [
         {
-          id: `question-${Date.now()}`,
+          id: questionId,
           title,
           author: userProfile.name,
           tag,
@@ -190,6 +210,18 @@ export default function App() {
           createdByUser: true
         },
         ...current.forumQuestions
+      ],
+      questionCategoryDecisions: [
+        ...current.questionCategoryDecisions,
+        {
+          questionId,
+          suggestedCategory: suggestion.category,
+          finalCategory: tag,
+          acceptedSuggestion: tag === suggestion.category,
+          confidence: suggestion.confidence,
+          reason: suggestion.reason,
+          createdAt: new Date().toISOString()
+        }
       ]
     }));
   };
@@ -207,7 +239,10 @@ export default function App() {
           createdAt: new Date().toISOString(),
           createdByUser: true
         }
-      ]
+      ],
+      forumSummaries: Object.fromEntries(
+        Object.entries(current.forumSummaries).filter(([summaryQuestionId]) => summaryQuestionId !== questionId)
+      )
     }));
   };
 
@@ -289,6 +324,94 @@ export default function App() {
   };
 
   const interestedEvents = sortedEvents.filter((event) => storageState.interestedEventIds.includes(event.id));
+  const intelligenceContext = buildIntelligenceContext({
+    user: userProfile,
+    disciplines,
+    professors,
+    groups: allGroups,
+    forumQuestions: allQuestions,
+    forumAnswers: allAnswers,
+    chatMessages: allMessages,
+    materials: allMaterials,
+    events: sortedEvents,
+    notices: sortedNotices,
+    exams: sortedExams,
+    ratings: storageState.ratings,
+    joinedGroupIds: storageState.joinedGroupIds,
+    interestedEventIds: storageState.interestedEventIds,
+    likedQuestionIds: storageState.likedQuestionIds
+  });
+
+  const handleGenerateWeeklyPlan = async (): Promise<WeeklyPlan> => {
+    const plan = await maybeUseExternalIntelligence(
+      {
+        kind: 'weekly-plan',
+        context: createExternalIntelligenceContext(intelligenceContext)
+      },
+      () => generateWeeklyPlan(intelligenceContext),
+      isWeeklyPlan
+    );
+
+    setStorageState((current) => ({
+      ...current,
+      lastWeeklyPlan: plan
+    }));
+
+    return plan;
+  };
+
+  const handleClearWeeklyPlan = () => {
+    setStorageState((current) => ({
+      ...current,
+      lastWeeklyPlan: null
+    }));
+  };
+
+  const handleGenerateMaterialRecommendations = async (
+    disciplineId: string
+  ): Promise<MaterialRecommendationResult> => {
+    const result = await maybeUseExternalIntelligence(
+      {
+        kind: 'material-recommendation',
+        context: createExternalIntelligenceContext(intelligenceContext),
+        disciplineId
+      },
+      () => recommendMaterials(intelligenceContext, disciplineId),
+      isMaterialRecommendationResult
+    );
+
+    setStorageState((current) => ({
+      ...current,
+      materialRecommendations: {
+        ...current.materialRecommendations,
+        [disciplineId]: result
+      }
+    }));
+
+    return result;
+  };
+
+  const handleGenerateForumSummary = async (questionId: string): Promise<ForumDiscussionSummary> => {
+    const summary = await maybeUseExternalIntelligence(
+      {
+        kind: 'forum-summary',
+        context: createExternalIntelligenceContext(intelligenceContext),
+        questionId
+      },
+      () => summarizeForumDiscussion(intelligenceContext, questionId),
+      isForumDiscussionSummary
+    );
+
+    setStorageState((current) => ({
+      ...current,
+      forumSummaries: {
+        ...current.forumSummaries,
+        [questionId]: summary
+      }
+    }));
+
+    return summary;
+  };
 
   const screenContent = (() => {
     switch (currentScreen) {
@@ -303,6 +426,9 @@ export default function App() {
             nextEvent={sortedEvents[0]}
             nextExam={sortedExams[0]}
             importantNotice={sortedNotices[0]}
+            weeklyPlan={storageState.lastWeeklyPlan}
+            onGenerateWeeklyPlan={handleGenerateWeeklyPlan}
+            onClearWeeklyPlan={handleClearWeeklyPlan}
             onOpenDisciplines={() => setCurrentScreen('disciplines')}
             onOpenGroups={() => setCurrentScreen('groups')}
             onOpenMaterials={() => openMaterials('home')}
@@ -329,10 +455,12 @@ export default function App() {
             average={getAverageForDiscipline(selectedDiscipline.id)}
             recentMaterials={relatedMaterials}
             recentQuestions={relatedQuestions}
+            recommendation={storageState.materialRecommendations[selectedDiscipline.id]}
             onBack={() => setCurrentScreen('disciplines')}
             onOpenRating={() => setCurrentScreen('rating')}
             onOpenMaterials={() => openMaterials('discipline-detail')}
             onOpenForum={() => openForum('discipline-detail')}
+            onGenerateRecommendations={handleGenerateMaterialRecommendations}
           />
         );
       case 'rating':
@@ -359,10 +487,12 @@ export default function App() {
             questions={allQuestions}
             answers={allAnswers}
             likedQuestionIds={storageState.likedQuestionIds}
+            summaries={storageState.forumSummaries}
             onBack={() => setCurrentScreen(returnScreen)}
             onCreateQuestion={handleCreateQuestion}
             onCreateAnswer={handleCreateAnswer}
             onToggleUseful={handleToggleUseful}
+            onGenerateSummary={handleGenerateForumSummary}
           />
         );
       case 'chat':

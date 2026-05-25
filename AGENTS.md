@@ -12,7 +12,7 @@ O projeto não é um sistema real de produção.
 
 Construir e manter um protótipo responsivo, mobile-first, bonito, navegável e estável para apresentação acadêmica.
 
-O protótipo deve parecer um aplicativo mobile moderno, mas funcionar como site estático.
+O protótipo deve parecer um aplicativo mobile moderno, mas funcionar como site estático compatível com GitHub Pages.
 
 ## Stack obrigatória
 
@@ -24,18 +24,38 @@ Use:
 - Tailwind CSS
 - localStorage
 - dados mockados locais
+- recursos inteligentes locais
 
 Não adicione:
 
-- backend
-- banco de dados
-- autenticação real
+- backend obrigatório
+- banco de dados obrigatório
+- autenticação real obrigatória
 - upload real
 - chat real
-- API externa
-- integrações pagas
+- dependência externa obrigatória
+- integrações pagas obrigatórias
 - analytics
 - tracking
+- segredos no front-end
+
+## Recursos inteligentes
+
+Toda funcionalidade inteligente deve ter fallback local.
+
+O protótipo deve funcionar totalmente no GitHub Pages.
+
+As funções inteligentes devem usar o estado atual consolidado do app.
+
+Dados criados pelo usuário devem influenciar os resultados inteligentes quando forem relevantes.
+
+Resetar o protótipo deve restaurar o comportamento inicial.
+
+É permitido preparar endpoint externo opcional usando apenas variável pública, desde que o app continue funcionando sem esse endpoint e sem expor segredo no front-end.
+
+Não espalhe lógica inteligente diretamente nas telas.
+
+Mantenha funções de análise local em serviços próprios, tipados e testáveis.
 
 ## Escopo do produto
 
@@ -53,6 +73,10 @@ O app deve conter:
 - Materiais
 - Eventos
 - Mais / Perfil
+- Resumo inteligente da semana
+- Recomendações inteligentes de materiais
+- Síntese de discussões
+- Sugestão automática de categoria
 
 Todas as telas devem ser navegáveis.
 
@@ -109,7 +133,7 @@ Não use senhas reais.
 
 Não use informações sensíveis.
 
-Não inclua menções a ferramentas de geração, inteligência artificial ou automação no código, interface, README ou textos visíveis do projeto.
+Não inclua menções a ferramentas de geração ou automação no código, interface, README ou textos visíveis do projeto.
 
 ## Regras de código
 
@@ -121,9 +145,13 @@ Use nomes descritivos.
 
 Mantenha dados mockados centralizados em src/data/mockData.ts.
 
-Mantenha tipos em src/types/app.ts.
+Mantenha tipos principais em src/types/app.ts.
+
+Mantenha tipos de recursos inteligentes em src/types/intelligence.ts.
 
 Mantenha helpers de localStorage em src/utils/storage.ts.
+
+Mantenha lógica inteligente em src/services/academicIntelligence.ts.
 
 Não deixe código morto.
 

@@ -7,6 +7,12 @@ import type {
   Rating,
   StorageState
 } from '../types/app';
+import type {
+  ForumDiscussionSummary,
+  MaterialRecommendationResult,
+  QuestionCategoryDecision,
+  WeeklyPlan
+} from '../types/intelligence';
 
 export const STORAGE_KEY = 'unifacil_prototype_state';
 
@@ -22,7 +28,11 @@ function createInitialStorageState(): StorageState {
     likedQuestionIds: [],
     chatMessages: [],
     customMaterials: [],
-    interestedEventIds: []
+    interestedEventIds: [],
+    lastWeeklyPlan: null,
+    materialRecommendations: {},
+    forumSummaries: {},
+    questionCategoryDecisions: []
   };
 }
 
@@ -158,6 +168,165 @@ function asMaterials(value: unknown): MaterialItem[] {
   });
 }
 
+function asWeeklyPlan(value: unknown): WeeklyPlan | null {
+  if (!isRecord(value) || !Array.isArray(value.priorities)) {
+    return null;
+  }
+
+  if (
+    typeof value.id !== 'string' ||
+    typeof value.title !== 'string' ||
+    typeof value.intro !== 'string' ||
+    typeof value.closingMessage !== 'string' ||
+    typeof value.generatedAt !== 'string' ||
+    typeof value.sourceFingerprint !== 'string'
+  ) {
+    return null;
+  }
+
+  const priorities = value.priorities.filter((item): item is WeeklyPlan['priorities'][number] => {
+    if (!isRecord(item)) {
+      return false;
+    }
+
+    return (
+      typeof item.id === 'string' &&
+      typeof item.badge === 'string' &&
+      typeof item.title === 'string' &&
+      typeof item.description === 'string'
+    );
+  });
+
+  return {
+    id: value.id,
+    title: value.title,
+    intro: value.intro,
+    priorities,
+    closingMessage: value.closingMessage,
+    generatedAt: value.generatedAt,
+    sourceFingerprint: value.sourceFingerprint
+  };
+}
+
+function asMaterialRecommendation(value: unknown): MaterialRecommendationResult | null {
+  if (!isRecord(value) || !Array.isArray(value.items)) {
+    return null;
+  }
+
+  if (
+    typeof value.disciplineId !== 'string' ||
+    typeof value.headline !== 'string' ||
+    typeof value.reason !== 'string' ||
+    typeof value.generatedAt !== 'string' ||
+    typeof value.sourceFingerprint !== 'string'
+  ) {
+    return null;
+  }
+
+  const items = value.items.filter((item): item is MaterialRecommendationResult['items'][number] => {
+    if (!isRecord(item)) {
+      return false;
+    }
+
+    return (
+      typeof item.materialId === 'string' &&
+      typeof item.title === 'string' &&
+      typeof item.category === 'string' &&
+      typeof item.typeLabel === 'string' &&
+      typeof item.reason === 'string' &&
+      typeof item.score === 'number'
+    );
+  });
+
+  return {
+    disciplineId: value.disciplineId,
+    headline: value.headline,
+    reason: value.reason,
+    items,
+    generatedAt: value.generatedAt,
+    sourceFingerprint: value.sourceFingerprint
+  };
+}
+
+function asForumSummary(value: unknown): ForumDiscussionSummary | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  if (
+    typeof value.questionId !== 'string' ||
+    typeof value.problem !== 'string' ||
+    typeof value.guidance !== 'string' ||
+    typeof value.nextStep !== 'string' ||
+    typeof value.category !== 'string' ||
+    typeof value.answerCount !== 'number' ||
+    typeof value.usefulCount !== 'number' ||
+    typeof value.generatedAt !== 'string' ||
+    typeof value.sourceFingerprint !== 'string'
+  ) {
+    return null;
+  }
+
+  return {
+    questionId: value.questionId,
+    problem: value.problem,
+    guidance: value.guidance,
+    nextStep: value.nextStep,
+    category: value.category as ForumDiscussionSummary['category'],
+    fewAnswersNotice: typeof value.fewAnswersNotice === 'string' ? value.fewAnswersNotice : undefined,
+    answerCount: value.answerCount,
+    usefulCount: value.usefulCount,
+    generatedAt: value.generatedAt,
+    sourceFingerprint: value.sourceFingerprint
+  };
+}
+
+function asRecommendationMap(value: unknown): Record<string, MaterialRecommendationResult> {
+  if (!isRecord(value)) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(value)
+      .map(([key, item]) => [key, asMaterialRecommendation(item)] as const)
+      .filter((entry): entry is readonly [string, MaterialRecommendationResult] => entry[1] !== null)
+  );
+}
+
+function asForumSummaryMap(value: unknown): Record<string, ForumDiscussionSummary> {
+  if (!isRecord(value)) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(value)
+      .map(([key, item]) => [key, asForumSummary(item)] as const)
+      .filter((entry): entry is readonly [string, ForumDiscussionSummary] => entry[1] !== null)
+  );
+}
+
+function asCategoryDecisions(value: unknown): QuestionCategoryDecision[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.filter((item): item is QuestionCategoryDecision => {
+    if (!isRecord(item)) {
+      return false;
+    }
+
+    return (
+      typeof item.questionId === 'string' &&
+      typeof item.suggestedCategory === 'string' &&
+      typeof item.finalCategory === 'string' &&
+      typeof item.acceptedSuggestion === 'boolean' &&
+      typeof item.confidence === 'string' &&
+      typeof item.reason === 'string' &&
+      typeof item.createdAt === 'string'
+    );
+  });
+}
+
 export function mergeStorageState(savedState: unknown): StorageState {
   const initialState = createInitialStorageState();
 
@@ -179,7 +348,11 @@ export function mergeStorageState(savedState: unknown): StorageState {
     likedQuestionIds: asStringArray(savedState.likedQuestionIds),
     chatMessages: asChatMessages(savedState.chatMessages),
     customMaterials: asMaterials(savedState.customMaterials),
-    interestedEventIds: asStringArray(savedState.interestedEventIds)
+    interestedEventIds: asStringArray(savedState.interestedEventIds),
+    lastWeeklyPlan: asWeeklyPlan(savedState.lastWeeklyPlan),
+    materialRecommendations: asRecommendationMap(savedState.materialRecommendations),
+    forumSummaries: asForumSummaryMap(savedState.forumSummaries),
+    questionCategoryDecisions: asCategoryDecisions(savedState.questionCategoryDecisions)
   };
 }
 
