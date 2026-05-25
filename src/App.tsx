@@ -31,6 +31,7 @@ import DisciplineDetailScreen from './screens/DisciplineDetailScreen';
 import DisciplinesScreen from './screens/DisciplinesScreen';
 import EventsScreen from './screens/EventsScreen';
 import ForumScreen from './screens/ForumScreen';
+import FigmaExportScreen from './screens/FigmaExportScreen';
 import GroupsScreen from './screens/GroupsScreen';
 import HomeScreen from './screens/HomeScreen';
 import LoginScreen from './screens/LoginScreen';
@@ -56,7 +57,11 @@ function sortDescendingByDate<T extends { createdAt?: string; addedAt?: string }
   });
 }
 
-export default function App() {
+function isFigmaExportMode(): boolean {
+  return typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('figma') === '1';
+}
+
+function UniFacilApp() {
   const [storageState, setStorageState] = useState<StorageState>(() => loadStorageState());
   const [currentScreen, setCurrentScreen] = useState<AppScreen>(() => (loadStorageState().isLoggedIn ? 'home' : 'splash'));
   const [selectedDisciplineId, setSelectedDisciplineId] = useState<string>(disciplines[0].id);
@@ -548,4 +553,8 @@ export default function App() {
       </AnimatePresence>
     </AppShell>
   );
+}
+
+export default function App() {
+  return isFigmaExportMode() ? <FigmaExportScreen /> : <UniFacilApp />;
 }
